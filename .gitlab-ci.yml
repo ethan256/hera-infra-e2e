@@ -1,0 +1,13 @@
+variables:
+  GOPROXY: https://goproxy.cn
+
+build:
+  image: docker:20.10.2
+  stage: build
+  before_script:
+    - docker login --username=wosai --password=Wosai1234 registry.wosai-inc.com
+  script:
+    - docker build --build-arg=GOPROXY=${GOPROXY} --build-arg=SSH_PRIVATE_KEY="${SSH_PRIVATE_KEY}" --build-arg=GITLAB_SSH_KNOWN_HOST="${GITLAB_SSH_KNOWN_HOST}" --target lint .
+    - docker build --build-arg=GOPROXY=${GOPROXY} --build-arg=SSH_PRIVATE_KEY="${SSH_PRIVATE_KEY}" --build-arg=GITLAB_SSH_KNOWN_HOST="${GITLAB_SSH_KNOWN_HOST}" --target unit-test .
+  tags:
+    - docker

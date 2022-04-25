@@ -19,6 +19,7 @@
 package constant
 
 const (
-	ActionHTTP = "http"
-	ActionCMD  = "cmd"
+	ActionHTTP     = "http"
+	ActionCMD      = "cmd"
+	ActionHeraHTTP = "hera-http"
 )

@@ -18,10 +18,10 @@
 package run
 
 import (
+	"github.com/apache/skywalking-infra-e2e/commands/assert"
 	"github.com/apache/skywalking-infra-e2e/commands/cleanup"
 	"github.com/apache/skywalking-infra-e2e/commands/setup"
 	"github.com/apache/skywalking-infra-e2e/commands/trigger"
-	"github.com/apache/skywalking-infra-e2e/commands/verify"
 	t "github.com/apache/skywalking-infra-e2e/internal/components/trigger"
 	"github.com/apache/skywalking-infra-e2e/internal/config"
 	"github.com/apache/skywalking-infra-e2e/internal/constant"
@@ -96,12 +96,12 @@ func runAccordingE2E() error {
 		logger.Log.Infof("no trigger need to execute")
 	}
 
-	// verify part
-	err = verify.DoVerifyAccordingConfig()
+	// assert part
+	err = assert.DoAssertAccordingConfig()
 	if err != nil {
 		return err
 	}
-	logger.Log.Infof("verify part finished successfully")
+	logger.Log.Infof("assert part finished successfully")
 
 	return nil
 }

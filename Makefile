@@ -19,7 +19,7 @@
 PROJECT := e2e
 VERSION ?= latest
 OUT_DIR = bin
-HUB ?= docker.io/apache
+HUB ?= registry.wosai-inc.com
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
@@ -28,19 +28,20 @@ GOOS ?= $(shell $(GO) env GOOS)
 GO_BUILD = $(GO) build
 GO_TEST = $(GO) test
 GO_LINT = $(GO_PATH)/bin/golangci-lint
-GO_BUILD_LDFLAGS = -X github.com/apache/skywalking-$(PROJECT)/commands.version=$(VERSION)
+GO_BUILD_LDFLAGS = -X registry.wosai-inc.com/middleware/hera-$(PROJECT)/commands.version=$(VERSION)
+GOPROXY = https://goproxy.cn
 
 PLATFORMS := windows linux darwin
 os = $(word 1, $@)
 
-RELEASE_BIN = skywalking-$(PROJECT)-$(VERSION)-bin
-RELEASE_SRC = skywalking-$(PROJECT)-$(VERSION)-src
+RELEASE_BIN = hera-$(PROJECT)-$(VERSION)-bin
+RELEASE_SRC = hera-$(PROJECT)-$(VERSION)-src
 
 all: clean lint test build
 
 .PHONY: lint
 lint:
-	$(GO_LINT) version || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GO_PATH)/bin -d "v1.42.1"
+	$(GO_LINT) version || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GO_PATH)/bin -d "v1.45.2"
 	$(GO_LINT) run -v --timeout 5m ./...
 
 .PHONY: fix-lint
@@ -72,7 +73,7 @@ verify: clean lint test
 
 .PHONY: docker
 docker:
-	docker build --no-cache . -t $(HUB)/$(PROJECT):$(VERSION)
+	docker build --no-cache --build-arg=GOPROXY=$(GOPROXY) -t $(HUB)/$(PROJECT):$(CI_COMMIT_REF_SLUG)-$(CI_COMMIT_SHA) .
 
 release-src: clean
 	-mkdir $(RELEASE_SRC)

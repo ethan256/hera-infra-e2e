@@ -197,9 +197,9 @@ func NewTimeout(timeBefore time.Time, timeout time.Duration) time.Duration {
 }
 
 func GetIdentity() string {
-	runID := os.Getenv("GITHUB_RUN_ID")
+	runID := os.Getenv("CI_JOB_ID")
 	if runID == "" {
-		return "skywalking_e2e"
+		return "hera-e2e"
 	}
 	return runID
 }

@@ -63,14 +63,9 @@ func CreateTriggerAction() (trigger.Action, error) {
 	case "":
 		return nil, nil
 	case constant.ActionHTTP:
-		return trigger.NewHTTPAction(
-			t.Interval,
-			t.Times,
-			t.URL,
-			t.Method,
-			t.Body,
-			t.Headers,
-		)
+		return trigger.NewHTTPAction(t.Interval, t.Times, t.URL, t.Method, t.Body, t.Headers)
+	case constant.ActionHeraHTTP:
+		return trigger.NewHeraHTTPAction(t.Interval, t.Times, t.URL, t.Method, t.Body, t.Headers)
 	default:
 		return nil, fmt.Errorf("unsupported trigger action: %s", t.Action)
 	}
