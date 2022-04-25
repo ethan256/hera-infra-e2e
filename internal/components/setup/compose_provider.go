@@ -81,6 +81,7 @@ type DockerContainer struct {
 
 	provider  *DockerProvider
 	consumers []LogConsumer
+	raw       *types.ContainerJSON
 }
 
 func (c *DockerContainer) GetContainerID() string {
@@ -295,6 +296,25 @@ func (c *DockerContainer) Exec(ctx context.Context, cmd []string) (int, error) {
 	}
 
 	return exitCode, nil
+}
+
+// State returns container's running state
+func (c *DockerContainer) State(ctx context.Context) (*types.ContainerState, error) {
+	inspect, err := c.inspectRawContainer(ctx)
+	if err != nil {
+		return c.raw.State, err
+	}
+	return inspect.State, nil
+}
+
+// update container raw info
+func (c *DockerContainer) inspectRawContainer(ctx context.Context) (*types.ContainerJSON, error) {
+	inspect, err := c.provider.client.ContainerInspect(ctx, c.ID)
+	if err != nil {
+		return nil, err
+	}
+	c.raw = &inspect
+	return c.raw, nil
 }
 
 // DockerNetwork represents a network started using Docker

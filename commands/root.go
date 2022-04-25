@@ -23,8 +23,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/apache/skywalking-infra-e2e/internal/logger"
-
+	"github.com/apache/skywalking-infra-e2e/commands/assert"
+	"github.com/apache/skywalking-infra-e2e/commands/assist"
 	"github.com/apache/skywalking-infra-e2e/commands/cleanup"
 	"github.com/apache/skywalking-infra-e2e/commands/run"
 	"github.com/apache/skywalking-infra-e2e/commands/setup"
@@ -32,6 +32,7 @@ import (
 	"github.com/apache/skywalking-infra-e2e/commands/verify"
 	"github.com/apache/skywalking-infra-e2e/internal/config"
 	"github.com/apache/skywalking-infra-e2e/internal/constant"
+	"github.com/apache/skywalking-infra-e2e/internal/logger"
 	"github.com/apache/skywalking-infra-e2e/internal/util"
 )
 
@@ -89,9 +90,12 @@ func Execute() error {
 	Root.AddCommand(trigger.Trigger)
 	Root.AddCommand(verify.Verify)
 	Root.AddCommand(cleanup.Cleanup)
+	Root.AddCommand(assert.Assert)
+	Root.AddCommand(assist.Assist)
 
 	Root.PersistentFlags().StringVarP(&verbosity, "verbosity", "v", logrus.InfoLevel.String(), "log level (debug, info, warn, error, fatal, panic")
-	Root.PersistentFlags().StringVarP(&util.WorkDir, "work-dir", "w", "~/.skywalking-infra-e2e", "the working directory for skywalking-infra-e2e")
+
+	Root.PersistentFlags().StringVarP(&util.WorkDir, "work-dir", "w", "~/.skywalking-infra-e2e", "the working directory for hera-infra-e2e")
 	Root.PersistentFlags().StringVarP(&util.LogDir, "log-dir", "l", "~/.skywalking-infra-e2e/logs", "the container logs directory for environment")
 	Root.PersistentFlags().StringVarP(&util.CfgFile, "config", "c", constant.E2EDefaultFile, "the config file")
 
