@@ -56,16 +56,17 @@ func notEmpty(s string) string {
 	if len(strings.TrimSpace(s)) > 0 {
 		return s
 	}
-	return fmt.Sprintf(`<"%q" is empty, wanted is not empty>`, s)
+	return fmt.Sprintf("<%q is empty, wanted is not empty>", s)
 }
 
 func regexpMatch(s, pattern string) string {
 	matched, err := regexp.MatchString(pattern, s)
 	if err != nil {
-		return fmt.Sprintf(`<"%q">`, err)
+		return fmt.Sprintf(`<%q>`, err)
 	}
 	if !matched {
-		return fmt.Sprintf(`<"%q" does not match the pattern %q">`, s, pattern)
+		// Note: Changing %s to %q for s would throw yaml parsing error
+		return fmt.Sprintf("<%s does not match the pattern %q>", s, pattern)
 	}
 	return s
 }
