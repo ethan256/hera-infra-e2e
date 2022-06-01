@@ -5,6 +5,7 @@ go 1.18
 replace github.com/apache/skywalking-infra-e2e => ./
 
 require (
+	bou.ke/monkey v1.0.2
 	github.com/docker/docker v20.10.14+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/google/go-cmp v0.5.7
@@ -14,7 +15,7 @@ require (
 	github.com/prometheus/prom2json v1.3.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.4.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/testcontainers/testcontainers-go v0.12.0
 	go.uber.org/multierr v1.6.0
 	gopkg.in/yaml.v2 v2.4.0

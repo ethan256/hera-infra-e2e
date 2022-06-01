@@ -60,6 +60,9 @@ func assertFamilyMetric(expectedFamily, actualFamily *prom2json.Family) error {
 }
 
 func metricAssert(expectedMetrics, actualMetrics []interface{}) error {
+	if len(expectedMetrics) != len(actualMetrics) {
+		return fmt.Errorf("metrics length not equal. actual: %d, expected: %d", len(actualMetrics), len(expectedMetrics))
+	}
 	wg := sync.WaitGroup{}
 	errChan := make(chan error, len(expectedMetrics))
 	for i := 0; i < len(expectedMetrics); i++ {
@@ -105,6 +108,9 @@ func metricAssert(expectedMetrics, actualMetrics []interface{}) error {
 }
 
 func summaryAssert(expectedMetrics, actualMetrics []interface{}) error {
+	if len(expectedMetrics) != len(actualMetrics) {
+		return fmt.Errorf("metrics length not equal. actual: %d, expected: %d", len(actualMetrics), len(expectedMetrics))
+	}
 	wg := sync.WaitGroup{}
 	errChan := make(chan error, len(expectedMetrics))
 	for i := 0; i < len(expectedMetrics); i++ {
@@ -144,6 +150,9 @@ func summaryAssert(expectedMetrics, actualMetrics []interface{}) error {
 }
 
 func histogramAssert(expectedMetrics, actualMetrics []interface{}) error {
+	if len(expectedMetrics) != len(actualMetrics) {
+		return fmt.Errorf("metrics length not equal. actual: %d, expected: %d", len(actualMetrics), len(expectedMetrics))
+	}
 	wg := sync.WaitGroup{}
 	errChan := make(chan error, len(expectedMetrics))
 	for i := 0; i < len(expectedMetrics); i++ {

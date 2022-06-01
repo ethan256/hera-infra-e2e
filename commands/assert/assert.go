@@ -36,12 +36,26 @@ var Assert = &cobra.Command{
 	},
 }
 
-func assertSingleCase(expectedFile, actualFile, query string) error {
-	if err := assert.DataAssert(expectedFile, actualFile, query); err != nil {
+func assertSingleCase(expectedFile, actualFile, query string) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Log.Error("`assertSingleCase` func throws a panic, we are recover")
+			// check exactly what the panic was and create error.
+			switch x := r.(type) {
+			case string:
+				err = errors.New(x)
+			case error:
+				err = x
+			default:
+				err = errors.New("Unknow panic")
+			}
+		}
+	}()
+	if err = assert.DataAssert(expectedFile, actualFile, query); err != nil {
 		return errors.Errorf("Assert Failed: expectedFile: %s, actualFile: %s, exception: %v", expectedFile, actualFile, err)
 	}
 	logger.Log.Infof("assert the actualFile: %s", actualFile)
-	return nil
+	return
 }
 
 // DoAssertAccordingConfig reads cases from the config file and assert them.
