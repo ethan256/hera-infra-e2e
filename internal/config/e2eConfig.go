@@ -19,10 +19,12 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/apache/skywalking-infra-e2e/internal/constant"
+	"github.com/apache/skywalking-infra-e2e/internal/logger"
 	"github.com/apache/skywalking-infra-e2e/internal/util"
 )
 
@@ -39,7 +41,7 @@ type Setup struct {
 	Env                   string    `yaml:"env"`
 	File                  string    `yaml:"file"`
 	Steps                 []Step    `yaml:"steps"`
-	Timeout               string    `yaml:"timeout"`
+	Timeout               any       `yaml:"timeout"`
 	InitSystemEnvironment string    `yaml:"init-system-environment"`
 	Kind                  KindSetup `yaml:"kind"`
 
@@ -47,7 +49,7 @@ type Setup struct {
 }
 
 func (s *Setup) Finalize() error {
-	interval, err := time.ParseDuration(s.Timeout)
+	interval, err := parseInterval(s.Timeout, "setup.timeout")
 	if err != nil {
 		return err
 	}
@@ -136,8 +138,8 @@ type VerifyCase struct {
 }
 
 type VerifyRetryStrategy struct {
-	Count    int    `yaml:"count"`
-	Interval string `yaml:"interval"`
+	Count    int `yaml:"count"`
+	Interval any `yaml:"interval"`
 }
 
 type ReusingCases struct {
@@ -152,4 +154,28 @@ func (v *VerifyCase) GetActual() string {
 // GetExpected resolves the absolute file path of the expected data file.
 func (v *VerifyCase) GetExpected() string {
 	return util.ResolveAbs(v.Expected)
+}
+
+// parseInterval parses a Duration field with number and string content for compatibility,
+// only use this when we previously allow configuring number like 120 and now string like 2m.
+// TODO remove this in 2.0
+func parseInterval(retryInterval any, name string) (time.Duration, error) {
+	var interval time.Duration
+	var err error
+	switch itv := retryInterval.(type) {
+	case int:
+		logger.Log.Warnf("configuring %v with number %v is deprecated and will be removed in future version,"+
+			" please use Duration style instead, such as 10s, 1m.", name, itv)
+		interval = time.Duration(itv) * time.Second
+	case string:
+		if interval, err = time.ParseDuration(itv); err != nil {
+			return 0, err
+		}
+	default:
+		return 0, fmt.Errorf("failed to parse %v: %v", name, retryInterval)
+	}
+	if interval < 0 {
+		interval = constant.DefaultWaitTimeout
+	}
+	return interval, nil
 }

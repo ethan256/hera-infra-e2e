@@ -28,7 +28,7 @@ RUN git config --global url."git@git.wosai-inc.com:".insteadOf "https://git.wosa
 COPY go.* ./
 RUN go mod download
 
-FROM golangci/golangci-lint:v1.45.2 AS lint-base
+FROM golangci/golangci-lint:v1.46.2 AS lint-base
 
 FROM base AS lint
 RUN --mount=target=. \
