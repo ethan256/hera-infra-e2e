@@ -1,6 +1,7 @@
 package assert
 
 import (
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -20,6 +21,7 @@ const (
 	LessThan   operationType = "lt"
 	Empty      operationType = "empty"
 	NotEmpty   operationType = "notEmpty"
+	Regexp     operationType = "regexp"
 )
 
 var assertRegister map[operationType]Interface
@@ -36,6 +38,7 @@ func initRegister() {
 	assertRegister[LessThan] = new(lessThanAssert)
 	assertRegister[Empty] = new(emptyAssert)
 	assertRegister[NotEmpty] = new(notEmptyAssert)
+	assertRegister[Regexp] = new(regexpAssert)
 }
 
 type Interface interface {
@@ -47,6 +50,7 @@ type expression struct {
 	expectedValue string
 }
 
+var regexpCache sync.Map
 var expressionCache sync.Map
 
 func init() {
@@ -77,6 +81,10 @@ func parseExpression(exp string) *expression {
 	switch operation {
 	case Noop, Equal, NotEqual, Empty, NotEmpty, GreatEqual, GreatThan, LessEqual, LessThan:
 		e = &expression{operation: operation, expectedValue: value}
+	case Regexp:
+		e = &expression{operation: operation, expectedValue: value}
+		re := regexp.MustCompile(value)
+		regexpCache.Store(value, re)
 	default:
 		e = &expression{operation: Equal, expectedValue: exp}
 	}
@@ -205,6 +213,21 @@ type notEmptyAssert struct{}
 func (*notEmptyAssert) Assert(_, actualValue string) error {
 	if actualValue == "" {
 		return errors.Errorf("--expectedValue => %s, ++actualValue => %s", "notEmpty", actualValue)
+	}
+	return nil
+}
+
+type regexpAssert struct{}
+
+func (r *regexpAssert) Assert(expectedValue, actualValue string) error {
+	var re *regexp.Regexp
+	if rec, ok := regexpCache.Load(expectedValue); !ok {
+		re = regexp.MustCompile(expectedValue)
+	} else {
+		re = rec.(*regexp.Regexp)
+	}
+	if !re.MatchString(actualValue) {
+		return errors.Errorf("--expectedValue => `%q`, ++actualValue => `%q`", expectedValue, actualValue)
 	}
 	return nil
 }

@@ -11,6 +11,7 @@ type assertCase struct {
 	Desc     string `json:"desc"`
 	Expected string `json:"expected"`
 	Actual   string `json:"actual"`
+	WantFail bool   `json:"wantFail"`
 }
 
 var caseStr = `
@@ -54,6 +55,27 @@ var caseStr = `
 	"desc": "case 08",
 	"expected": "ne 0",
 	"actual": "2"
+},
+{
+	"desc": "case 09",
+	"expected": "regexp ^v(([0-9]|([1-9]([0-9]*))).){2}([0-9]|([1-9]([0-9]*)))([-](([0-9A-Za-z]|([1-9A-Za-z]([0-9A-Za-z]*)))[.]){0,}([0-9A-Za-z]|([1-9A-Za-z]([0-9A-Za-z]*)))){0,1}([+](([0-9A-Za-z]{1,})[.]){0,}([0-9A-Za-z]{1,})){0,1}$",
+	"actual": "v1.2.3"
+},
+{
+	"desc": "case 10",
+	"expected": "regexp ^v(([0-9]|([1-9]([0-9]*))).){2}([0-9]|([1-9]([0-9]*)))([-](([0-9A-Za-z]|([1-9A-Za-z]([0-9A-Za-z]*)))[.]){0,}([0-9A-Za-z]|([1-9A-Za-z]([0-9A-Za-z]*)))){0,1}([+](([0-9A-Za-z]{1,})[.]){0,}([0-9A-Za-z]{1,})){0,1}$",
+	"actual": "v1.2.3-abc"
+},
+{
+	"desc": "case 11",
+	"expected": "regexp ^v(([0-9]|([1-9]([0-9]*))).){2}([0-9]|([1-9]([0-9]*)))([-](([0-9A-Za-z]|([1-9A-Za-z]([0-9A-Za-z]*)))[.]){0,}([0-9A-Za-z]|([1-9A-Za-z]([0-9A-Za-z]*)))){0,1}([+](([0-9A-Za-z]{1,})[.]){0,}([0-9A-Za-z]{1,})){0,1}$",
+	"actual": "v1.22.0"
+},
+{
+	"desc": "case 12",
+	"expected": "regexp ^v(([0-9]|([1-9]([0-9]*))).){2}([0-9]|([1-9]([0-9]*)))([-](([0-9A-Za-z]|([1-9A-Za-z]([0-9A-Za-z]*)))[.]){0,}([0-9A-Za-z]|([1-9A-Za-z]([0-9A-Za-z]*)))){0,1}([+](([0-9A-Za-z]{1,})[.]){0,}([0-9A-Za-z]{1,})){0,1}$",
+	"actual": "v1.22.abc",
+	"wantFail": true
 }
 ]
 `
@@ -65,7 +87,7 @@ func TestValueAssert(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		if err := runTestCase(c); err != nil {
+		if err := runTestCase(c); err != nil && !c.WantFail {
 			t.Errorf("case: %s, error: %s", c.Desc, err.Error())
 		}
 	}

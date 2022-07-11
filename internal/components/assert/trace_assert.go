@@ -10,12 +10,16 @@ import (
 	"github.com/apache/skywalking-infra-e2e/internal/components/assert/exception"
 )
 
-// TracesAssert assert expected traces and actual traces.
+// doTracesAssert assert expected traces and actual traces.
 // return nil, if assert success, otherwise， return error.
 // the first matching trace is searched from the actual data
 // until all expected traces are successfully matched.
 // Once the search fails, return error directly
-func TracesAssert(expected, actual []*entity.Trace) error {
+func doTracesAssert(expected, actual []*entity.Trace) error {
+	if len(expected) == 0 {
+		return errors.New("expected traces can not empty")
+	}
+
 	var actualTrace *entity.Trace
 	var err error
 	exist := make(map[string]struct{})

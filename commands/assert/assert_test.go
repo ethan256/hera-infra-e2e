@@ -10,7 +10,7 @@ import (
 )
 
 func TestAssertSingleCase(t *testing.T) {
-	monkey.Patch(assert.DataAssert, func(string, string, string) error {
+	monkey.Patch(assert.MetricsAssert, func(string, string) error {
 		panic("assert throws a panic")
 	})
 	err := assertSingleCase("", "", "")

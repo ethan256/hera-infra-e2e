@@ -1,5 +1,10 @@
 package entity
 
+type TraceData struct {
+	Size   int      `json:"size,omitempty"`
+	Traces []*Trace `json:"traces"`
+}
+
 type Trace struct {
 	TraceID string  `json:"traceId"`
 	Spans   []*Span `json:"spans"`
@@ -13,7 +18,7 @@ type Span struct {
 	OperationName string            `json:"operationName"`
 	StartTime     IntOrString       `json:"startTime"`
 	ParentSpanID  string            `json:"parentSpanId"`
-	Logs          []interface{}     `json:"logs"`
+	Logs          []any             `json:"logs"`
 	Tags          map[string]string `json:"tags"`
 	References    []*Reference      `json:"references"`
 }

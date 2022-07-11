@@ -52,7 +52,7 @@ func NewHeraHTTPAction(intervalStr string, times int, url, method, body string, 
 func (h *heraHTTPAction) Do() chan error {
 	t := time.NewTicker(h.interval)
 
-	logger.Log.Infof("trigger will request URL %s %d times with interval %s.", h.url, h.times, h.interval)
+	logger.Log.Infof("trigger will request URL %s, max times %d with interval %s.", h.url, h.times, h.interval)
 
 	result := make(chan error)
 	go func() {
