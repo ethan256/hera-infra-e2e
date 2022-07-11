@@ -78,7 +78,7 @@ func DoAssertAccordingConfig() error {
 	if retryCount <= 0 {
 		retryCount = 1
 	}
-	interval, err := time.ParseDuration(e2eConfig.Assert.RetryStrategy.Interval)
+	interval, err := parseInterval(e2eConfig.Assert.RetryStrategy.Interval)
 	if err != nil {
 		return err
 	}
@@ -101,4 +101,28 @@ func DoAssertAccordingConfig() error {
 	}
 
 	return nil
+}
+
+// TODO remove this in 2.0.0
+func parseInterval(retryInterval any) (time.Duration, error) {
+	var interval time.Duration
+	var err error
+	switch itv := retryInterval.(type) {
+	case int:
+		logger.Log.Warnf(`configuring verify.retry.interval with number is deprecated
+and will be removed in future version, please use Duration style instead, such as 10s, 1m.`)
+		interval = time.Duration(itv) * time.Millisecond
+	case string:
+		if interval, err = time.ParseDuration(itv); err != nil {
+			return 0, err
+		}
+	case nil:
+		interval = 0
+	default:
+		return 0, fmt.Errorf("failed to parse verify.retry.interval: %v", retryInterval)
+	}
+	if interval < 0 {
+		interval = 1 * time.Second
+	}
+	return interval, nil
 }
