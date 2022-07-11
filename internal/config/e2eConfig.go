@@ -93,7 +93,23 @@ type Verify struct {
 
 type Assert struct {
 	RetryStrategy VerifyRetryStrategy `yaml:"retry"`
-	Cases         []VerifyCase        `yaml:"cases"`
+	Cases         []AssertCase        `yaml:"cases"`
+}
+
+type AssertCase struct {
+	Query    string `yaml:"query"`
+	Actual   string `yaml:"actual"`
+	Expected string `yaml:"expected"`
+}
+
+// GetActual resolves the absolute file path of the actual data file.
+func (v *AssertCase) GetActual() string {
+	return util.ResolveAbs(v.Actual)
+}
+
+// GetExpected resolves the absolute file path of the expected data file.
+func (v *AssertCase) GetExpected() string {
+	return util.ResolveAbs(v.Expected)
 }
 
 func (s *Setup) GetFile() string {

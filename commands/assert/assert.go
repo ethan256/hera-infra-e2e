@@ -28,7 +28,7 @@ var Assert = &cobra.Command{
 	Use:   "assert",
 	Short: "assert if the actual data match the expected data",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if assertExpected != "" {
+		if assertExpected != "" || assertQuery != "" {
 			return assertSingleCase(assertExpected, assertActual, assertQuery)
 		}
 		// If there is no given flags.
@@ -51,11 +51,19 @@ func assertSingleCase(expectedFile, actualFile, query string) (err error) {
 			}
 		}
 	}()
-	if err = assert.DataAssert(expectedFile, actualFile, query); err != nil {
-		return errors.Errorf("Assert Failed: expectedFile: %s, actualFile: %s, exception: %v", expectedFile, actualFile, err)
+
+	if query != "" {
+		err = assert.MetricsAssert(expectedFile, query)
+		if err != nil {
+			return errors.Wrap(err, "assert metrics failed")
+		}
+	} else {
+		err = assert.TracesAssert(expectedFile, actualFile)
+		if err != nil {
+			return errors.Wrap(err, "assert traces failed")
+		}
 	}
-	logger.Log.Infof("assert the actualFile: %s", actualFile)
-	return
+	return nil
 }
 
 // DoAssertAccordingConfig reads cases from the config file and assert them.
@@ -79,13 +87,14 @@ func DoAssertAccordingConfig() error {
 		if v.GetExpected() == "" {
 			return fmt.Errorf("the expected data file for case[%v] is not specified", idx)
 		}
-		for current := 1; current <= retryCount; current++ {
+		for current := 0; current <= retryCount; current++ {
 			if err := assertSingleCase(v.GetExpected(), v.GetActual(), v.Query); err == nil {
 				break
 			} else if current != retryCount {
-				logger.Log.Warnf("assert case failure, will continue retry, %v", err)
+				logger.Log.Warnf("assert case[%d] failure, will continue after %ds", idx, interval/time.Second)
 				time.Sleep(interval)
 			} else {
+				logger.Log.Errorf("assert case[%d] failure, will exit, error: %v", idx, err)
 				return err
 			}
 		}

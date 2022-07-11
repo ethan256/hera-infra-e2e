@@ -19,39 +19,30 @@ const (
 )
 
 func ActualDataToExpected(actualPath, expectedPath, url string) error {
+	if url != "" {
+		return writeExpectedMetricsToFile(url, expectedPath)
+	}
+	return writeExpectedTracesToFile(actualPath, expectedPath)
+}
+
+func writeExpectedTracesToFile(actualPath, expectedPath string) error {
 	var (
-		actual      *entity.Data
-		expected    *entity.Data
-		metricsData []*prom2json.Family
-		metrics     []*prom2json.Family
-		res         []byte
-		err         error
+		actual   *entity.TraceData
+		expected *entity.TraceData
+		res      []byte
+		err      error
 	)
 	actual, err = assert.LoadTracesData(actualPath)
 	if err != nil {
 		return err
 	}
 
-	expected = &entity.Data{
-		ServiceName: actual.ServiceName,
-		Traces:      make([]*entity.Trace, 0),
-		Metrics:     make([]*prom2json.Family, 0),
+	expected = &entity.TraceData{
+		Traces: make([]*entity.Trace, 0),
 	}
-
 	traces := convertTraces(actual.Traces)
 	expected.Traces = append(expected.Traces, traces...)
-
-	if url != "" {
-		metricsData, err = assert.LoadMetricsData(url)
-		if err != nil {
-			return err
-		}
-		metrics, err = convertMetrics(metricsData)
-		if err != nil {
-			return err
-		}
-		expected.Metrics = append(expected.Metrics, metrics...)
-	}
+	expected.Size = actual.Size
 
 	res, err = json.Marshal(expected)
 	if err != nil {
@@ -83,6 +74,31 @@ func convertTraces(actual []*entity.Trace) []*entity.Trace {
 	return expected
 }
 
+func writeExpectedMetricsToFile(url, expectedPath string) error {
+	var (
+		expected []*prom2json.Family
+		actual   []*prom2json.Family
+		res      []byte
+		err      error
+	)
+
+	actual, err = assert.LoadMetricsData(url)
+	if err != nil {
+		return err
+	}
+	metrics, err := convertMetrics(actual)
+	if err != nil {
+		return err
+	}
+	expected = append(expected, metrics...)
+	res, err = json.Marshal(expected)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(expectedPath, res, os.ModePerm)
+}
+
 func convertMetrics(actualData []*prom2json.Family) ([]*prom2json.Family, error) {
 	var expectedData []*prom2json.Family
 	var err error
@@ -91,10 +107,10 @@ func convertMetrics(actualData []*prom2json.Family) ([]*prom2json.Family, error)
 			Name:    datum.Name,
 			Help:    datum.Help,
 			Type:    datum.Type,
-			Metrics: make([]interface{}, 0),
+			Metrics: make([]any, 0),
 		}
 
-		var metrics []interface{}
+		var metrics []any
 		switch strings.ToLower(datum.Type) {
 		case "histogram":
 			metrics, err = convertHistogram(datum.Metrics)
@@ -114,8 +130,8 @@ func convertMetrics(actualData []*prom2json.Family) ([]*prom2json.Family, error)
 	return expectedData, nil
 }
 
-func convertMetric(actualMetrics []interface{}) ([]interface{}, error) {
-	expected := make([]interface{}, 0)
+func convertMetric(actualMetrics []any) ([]any, error) {
+	expected := make([]any, 0)
 	for i := 0; i < len(actualMetrics); i++ {
 		actual, ok := actualMetrics[i].(prom2json.Metric)
 		if !ok {
@@ -128,8 +144,8 @@ func convertMetric(actualMetrics []interface{}) ([]interface{}, error) {
 	return expected, nil
 }
 
-func convertHistogram(actualMetrics []interface{}) ([]interface{}, error) {
-	expected := make([]interface{}, 0)
+func convertHistogram(actualMetrics []any) ([]any, error) {
+	expected := make([]any, 0)
 	for i := 0; i < len(actualMetrics); i++ {
 		actual, ok := actualMetrics[i].(prom2json.Histogram)
 		if !ok {
@@ -142,8 +158,8 @@ func convertHistogram(actualMetrics []interface{}) ([]interface{}, error) {
 	return expected, nil
 }
 
-func convertSummary(actualMetrics []interface{}) ([]interface{}, error) {
-	expected := make([]interface{}, 0)
+func convertSummary(actualMetrics []any) ([]any, error) {
+	expected := make([]any, 0)
 	for i := 0; i < len(actualMetrics); i++ {
 		actual, ok := actualMetrics[i].(prom2json.Summary)
 		if !ok {
