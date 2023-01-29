@@ -89,14 +89,19 @@ type KindExposePort struct {
 type Verify struct {
 	RetryStrategy VerifyRetryStrategy `yaml:"retry"`
 	Cases         []VerifyCase        `yaml:"cases"`
+	FailFast      bool                `yaml:"fail-fast"`
+	Concurrency   bool                `yaml:"concurrency"`
 }
 
 type Assert struct {
 	RetryStrategy VerifyRetryStrategy `yaml:"retry"`
 	Cases         []AssertCase        `yaml:"cases"`
+	FailFast      bool                `yaml:"fail-fast"`
+	Concurrency   bool                `yaml:"concurrency"`
 }
 
 type AssertCase struct {
+	Name     string `yaml:"name"`
 	Query    string `yaml:"query"`
 	Actual   string `yaml:"actual"`
 	Expected string `yaml:"expected"`
@@ -147,6 +152,7 @@ type Trigger struct {
 }
 
 type VerifyCase struct {
+	Name     string   `yaml:"name"`
 	Query    string   `yaml:"query"`
 	Actual   string   `yaml:"actual"`
 	Expected string   `yaml:"expected"`

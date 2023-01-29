@@ -16,19 +16,21 @@
 # under the License.
 #
 
-PROJECT := e2e
+PROJECT ?= e2e
 VERSION ?= latest
 OUT_DIR = bin
-HUB ?= registry.wosai-inc.com
+HUB ?= jfrog.wosai-inc.com
+GO111MODULE?=on
+GOPROXY?=https://goproxy.cn,direct
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
 GOARCH ?= $(shell $(GO) env GOARCH)
 GOOS ?= $(shell $(GO) env GOOS)
 GO_BUILD = $(GO) build
-GO_TEST = $(GO) test
-GO_LINT = $(GO_PATH)/bin/golangci-lint
-GO_BUILD_LDFLAGS = -X registry.wosai-inc.com/middleware/hera-$(PROJECT)/commands.version=$(VERSION)
+GO_TEST = $(GO) test -race -v
+GO_LINT = golangci-lint
+GO_BUILD_LDFLAGS =-s -w -X github.com/apache/skywalking-infra-e2e/commands.version=$(VERSION)
 GOPROXY = https://goproxy.cn
 
 PLATFORMS := windows linux darwin
@@ -40,8 +42,8 @@ RELEASE_SRC = hera-$(PROJECT)-$(VERSION)-src
 all: clean lint test build
 
 .PHONY: lint
-lint:
-	$(GO_LINT) version || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GO_PATH)/bin -d "v1.46.2"
+lint: go-mod-download
+	$(GO_LINT) version
 	$(GO_LINT) run -v --timeout 5m ./...
 
 .PHONY: fix-lint
@@ -49,17 +51,23 @@ fix-lint:
 	$(GO_LINT) run -v --fix ./...
 
 .PHONY: test
-test: clean
+test: clean go-mod-download
 	$(GO_TEST) ./... -coverprofile=coverage.txt -covermode=atomic
 	@>&2 echo "Great, all tests passed."
 
+windows: PROJECT_SUFFIX=.exe
+
 .PHONY: $(PLATFORMS)
-$(PLATFORMS):
-	mkdir -p $(OUT_DIR)
-	GOOS=$(os) GOARCH=$(GOARCH) $(GO_BUILD) $(GO_BUILD_FLAGS) -ldflags "$(GO_BUILD_LDFLAGS)" -o $(OUT_DIR)/$(os)/$(PROJECT) cmd/e2e/main.go
+$(PLATFORMS): go-mod-download
+	CGO_ENABLE=0 GOOS=$(os) GOARCH=$(GOARCH) $(GO_BUILD) $(GO_BUILD_FLAGS) -ldflags "$(GO_BUILD_LDFLAGS)" -o $(OUT_DIR)/$(os)/$(PROJECT)$(PROJECT_SUFFIX) cmd/e2e/main.go
 
 .PHONY: build
 build: windows linux darwin
+
+.PHONY: go-mod-download
+go-mod-download:
+	@echo "Download go denpendency"
+	@GO111MODULE=on GOPROXY=$(GOPROXY) go mod download
 
 .PHONY: clean
 clean:

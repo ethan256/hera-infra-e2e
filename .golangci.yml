@@ -18,7 +18,7 @@
 
 run:
   tests: false
-  go: "1.18"
+  go: "1.19"
   skip-dirs:
     - third-party
 
@@ -97,7 +97,6 @@ linters-settings:
 
 linters:
   enable:
-    - deadcode
     - depguard
     - dogsled
     - dupl
@@ -121,12 +120,11 @@ linters:
     - typecheck
     - unconvert
     - unused
-    - varcheck
     - whitespace
   disable:
     - structcheck
 
 service:
-  golangci-lint-version: 1.20.x
+  golangci-lint-version: 1.50.x
   prepare:
     - echo "here I can run custom commands, but no preparation needed for this repo"

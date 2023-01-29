@@ -1,13 +1,47 @@
-variables:
-  GOPROXY: https://goproxy.cn
+include:
+  project: do/gitlab-ci
+  file: golang.yml
 
-build:
-  image: docker:20.10.2
-  stage: build
-  before_script:
-    - docker login --username=wosai --password=Wosai1234 registry.wosai-inc.com
+stages:
+  - lint
+  - deploy
+
+variables:
+  GOPROXY: https://goproxy.cn,https://${ARTIFACTORY_USER_STAGING}:${ARTIFACTORY_PASS_STAGING}@jfrog.wosai-inc.com/artifactory/api/go/golang-virtual-staging,direct
+
+lint:
+  stage: lint
+  image: golangci/golangci-lint:v1.50
   script:
-    - docker build --build-arg=GOPROXY=${GOPROXY} --build-arg=SSH_PRIVATE_KEY="${SSH_PRIVATE_KEY}" --build-arg=GITLAB_SSH_KNOWN_HOST="${GITLAB_SSH_KNOWN_HOST}" --target lint .
-    - docker build --build-arg=GOPROXY=${GOPROXY} --build-arg=SSH_PRIVATE_KEY="${SSH_PRIVATE_KEY}" --build-arg=GITLAB_SSH_KNOWN_HOST="${GITLAB_SSH_KNOWN_HOST}" --target unit-test .
+    - make lint
   tags:
-    - docker
+    - jfrog-staging
+
+deploy-release:
+  image: jfrog.wosai-inc.com/docker-virtual-prod/golang-builder:1.19
+  needs:
+    - lint
+  script:
+    - make test
+    - make build
+  only:
+    - branches
+  artifacts:
+    untracked: false
+    when: on_success
+    expire_in: "30 days"
+    paths:
+      - bin
+
+deploy-tag:
+  image: jfrog.wosai-inc.com/docker-virtual-prod/golang-builder:1.19
+  needs:
+    - lint
+  script:
+    - make build
+  artifacts:
+    untracked: false
+    when: on_success
+    expire_in: "30 days"
+    paths:
+      - bin

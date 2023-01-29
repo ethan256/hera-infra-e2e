@@ -159,6 +159,8 @@ verify:
   retry:            # verify with retry strategy
     count: 10       # max retry count
     interval: 10s   # the interval between two attempts, e.g. 10s, 1m.
+  fail-fast: true  # when a case fails, whether to stop verifying other cases. This property defaults to true.
+  concurrency: false # whether to verify cases concurrently. This property defaults to false.
   cases:            # verify test cases
     - actual: path/to/actual.yaml       # verify by actual file path
       expected: path/to/expected.yaml   # excepted content file path
@@ -168,7 +170,7 @@ verify:
         - path/to/cases.yaml            # cases file path
 ```
 
-The test cases are executed in the order of declaration from top to bottom, If the execution fails, and the retry strategy is exceeded, the process is deemed to have failed.
+The test cases are executed in the order of declaration from top to bottom. When the execution of a case fails and the retry strategy is exceeded, it will stop verifying other cases if `fail-fast` is `true`. Otherwise,  the process will continue to verify other cases.
 
 ### Retry strategy
 
@@ -208,6 +210,8 @@ Verify that the number fits the range.
 |le|Verify the first param is less than or equals second param |{{le param1 param2}}|param1|<wanted gt $param2, but was $param1>|
 |regexp|Verify the first param matches the second regular expression|{{regexp param1 param2}}|param1|<"$param1" does not match the pattern $param2">|
 |notEmpty|Verify The param is not empty|{{notEmpty param}}|param|<"" is empty, wanted is not empty>|
+|hasPrefix|Verify The string param has the same prefix.|{{hasPrefix param1 param2}}|true|false|
+|hasSuffix|Verify The string param has the same suffix.|{{hasSuffix param1 param2}}|true|false|
 
 ##### List Matches
 
@@ -228,6 +232,8 @@ In order to make the program easier for users to read and use, some code convers
 |Function|Description|Grammar|Result|
 |-------|------------|-------|------|
 |b64enc|Base64 encode|{{ b64enc "Foo" }}|Zm9v|
+|sha256enc|Sha256 encode|{{ sha256enc "Foo" }}|1cbec737f863e4922cee63cc2ebbfaafcd1cff8b790d8cfd2e6a5d550b648afa|
+|sha512enc|Sha512 encode|{{ sha512enc "Foo" }}|4abcd2639957cb23e33f63d70659b602a5923fafcfd2768ef79b0badea637e5c837161aa101a557a1d4deacbd912189e2bb11bf3c0c0c70ef7797217da7e8207|
 
 ### Reuse cases
 
