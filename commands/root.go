@@ -6,7 +6,7 @@
 // not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an
@@ -14,7 +14,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-//
 package commands
 
 import (
@@ -98,6 +97,9 @@ func Execute() error {
 	Root.PersistentFlags().StringVarP(&util.WorkDir, "work-dir", "w", "~/.skywalking-infra-e2e", "the working directory for hera-infra-e2e")
 	Root.PersistentFlags().StringVarP(&util.LogDir, "log-dir", "l", "~/.skywalking-infra-e2e/logs", "the container logs directory for environment")
 	Root.PersistentFlags().StringVarP(&util.CfgFile, "config", "c", constant.E2EDefaultFile, "the config file")
+	Root.PersistentFlags().BoolVarP(&util.BatchMode, "batch-mode", "B", false,
+		`whether to run in batch mode, if true, all interactive operations are disabled, including real-time progress bar.
+This option is always enabled in concurrency mode and in our GitHub Actions.`)
 
 	return Root.Execute()
 }

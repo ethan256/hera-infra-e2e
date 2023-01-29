@@ -44,6 +44,8 @@ func init() {
 	} else {
 		GlobalConfig.E2EConfig.Cleanup.On = constant.CleanUpOnSuccess
 	}
+
+	GlobalConfig.E2EConfig.Verify.FailFast = true
 }
 
 func ReadGlobalConfigFile() {
@@ -81,8 +83,8 @@ func convertVerify(verify *Verify) error {
 	// convert cases
 	result := make([]VerifyCase, 0)
 	cfgAbsPath, _ := filepath.Abs(util.CfgFile)
-	for _, c := range verify.Cases {
-		cases, err := convertSingleCase(c, cfgAbsPath)
+	for idx := range verify.Cases {
+		cases, err := convertSingleCase(&verify.Cases[idx], cfgAbsPath)
 		if err != nil {
 			return err
 		}
@@ -92,7 +94,7 @@ func convertVerify(verify *Verify) error {
 	return nil
 }
 
-func convertSingleCase(verifyCase VerifyCase, baseFile string) ([]VerifyCase, error) {
+func convertSingleCase(verifyCase *VerifyCase, baseFile string) ([]VerifyCase, error) {
 	if len(verifyCase.Includes) > 0 && (verifyCase.Expected != "" || verifyCase.Query != "") {
 		return nil, fmt.Errorf("include and query/expected only support selecting one of them in a case")
 	}
@@ -104,7 +106,7 @@ func convertSingleCase(verifyCase VerifyCase, baseFile string) ([]VerifyCase, er
 		if verifyCase.Actual != "" {
 			verifyCase.Actual = util.ResolveAbsWithBase(verifyCase.Actual, baseFile)
 		}
-		return []VerifyCase{verifyCase}, nil
+		return []VerifyCase{*verifyCase}, nil
 	}
 	result := make([]VerifyCase, 0)
 	for _, include := range verifyCase.Includes {
@@ -124,9 +126,9 @@ func convertSingleCase(verifyCase VerifyCase, baseFile string) ([]VerifyCase, er
 			return nil, fmt.Errorf("unmarshal reuse case config file %s error: %s", includePath, err)
 		}
 
-		for _, c := range r.Cases {
+		for idx := range r.Cases {
 			// using include file path as base path to resolve cases
-			cases, err := convertSingleCase(c, includePath)
+			cases, err := convertSingleCase(&r.Cases[idx], includePath)
 			if err != nil {
 				return nil, err
 			}
