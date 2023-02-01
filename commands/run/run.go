@@ -21,6 +21,7 @@ import (
 	"github.com/apache/skywalking-infra-e2e/commands/cleanup"
 	"github.com/apache/skywalking-infra-e2e/commands/setup"
 	"github.com/apache/skywalking-infra-e2e/commands/trigger"
+	"github.com/apache/skywalking-infra-e2e/commands/verify"
 	t "github.com/apache/skywalking-infra-e2e/internal/components/trigger"
 	"github.com/apache/skywalking-infra-e2e/internal/config"
 	"github.com/apache/skywalking-infra-e2e/internal/constant"
@@ -100,8 +101,12 @@ func runAccordingE2E() error {
 	if err != nil {
 		return err
 	}
-	logger.Log.Infof("assert part finished successfully")
 
+	// verify part
+	err = verify.DoVerifyAccordingConfig()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
