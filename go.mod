@@ -3,7 +3,6 @@ module github.com/apache/skywalking-infra-e2e
 go 1.19
 
 require (
-	bou.ke/monkey v1.0.2
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/google/go-cmp v0.5.8

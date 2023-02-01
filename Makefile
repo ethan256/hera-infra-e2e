@@ -41,6 +41,10 @@ RELEASE_SRC = hera-$(PROJECT)-$(VERSION)-src
 
 all: clean lint test build
 
+.PHONY: build-liux-fix
+build-linux-fix:
+	CGO_ENABLE=0 GOOS=linux GOARCH=amd64 CC=x86_64-linux-musl-gcc CXX=x86_64-linux-musl-g++ GO111MODULE=on go build $(GO_BUILD_FLAGS) -ldflags "$(GO_BUILD_LDFLAGS)" -o $(OUT_DIR)/$(os)/$(PROJECT)$(PROJECT_SUFFIX) cmd/e2e/main.go
+
 .PHONY: lint
 lint: go-mod-download
 	$(GO_LINT) version
