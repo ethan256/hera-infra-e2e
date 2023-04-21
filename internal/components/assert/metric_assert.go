@@ -70,6 +70,8 @@ func handleNotContainersMetrics(expected, actual []*prom2json.Family) ([]*prom2j
 			} else {
 				expectedMetrics = append(expectedMetrics, expected[expectedIndex])
 			}
+		} else {
+			expectedMetrics = append(expectedMetrics, expected[expectedIndex])
 		}
 	}
 
@@ -287,6 +289,9 @@ func assertHistogram(expectedIndex int, expectMetric map[string]any, actualMetri
 
 func assertHelper(expectedValue, actualValue, expectedCount, actualCount, expectedSum, actualSum string,
 	expectedLabels, actualLabels map[string]string) (err error) {
+	if len(actualLabels) < len(expectedLabels) {
+		return fmt.Errorf("len(actualLabels) < len(expectedLabels), expected: %+v, actual: %+v", expectedLabels, actualLabels)
+	}
 	if err = assertLabels(expectedLabels, actualLabels); err != nil {
 		return
 	}

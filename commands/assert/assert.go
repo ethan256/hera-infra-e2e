@@ -189,9 +189,9 @@ func assertCasesSerially(a *config.Assert, info *assertInfo) (err error) {
 		for current := 0; current <= info.retryCount; current++ {
 			if e := assertSingleCase(v.GetExpected(), v.GetActual(), v.Query); e == nil {
 				if current == 0 {
-					res[idx].Msg = fmt.Sprintf("verified %v \n", caseName(v))
+					res[idx].Msg = fmt.Sprintf("assert %v \n", caseName(v))
 				} else {
-					res[idx].Msg = fmt.Sprintf("verified %v, retried %d time(s)\n", caseName(v), current)
+					res[idx].Msg = fmt.Sprintf("assert %v, retried %d time(s)\n", caseName(v), current)
 				}
 				res[idx].Skip = false
 				printer.Success(res[idx].Msg)

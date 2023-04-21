@@ -200,8 +200,5 @@ func simpleReferenceEquals(expected, actual *entity.Reference) error {
 	if err := ValueAssert("span id", expected.SpanID, actual.SpanID); err != nil {
 		return err
 	}
-	if err := ValueAssert("trace id", expected.TraceID, actual.TraceID); err != nil {
-		return err
-	}
-	return nil
+	return ValueAssert("trace id", expected.TraceID, actual.TraceID)
 }

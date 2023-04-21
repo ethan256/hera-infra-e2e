@@ -105,7 +105,7 @@ func ValueAssert(desc, expectedExpress, actualValue string) error {
 
 type noopAssert struct{}
 
-func (*noopAssert) Assert(expectedValue, actualValue string) error {
+func (*noopAssert) Assert(_, _ string) error {
 	return nil
 }
 
