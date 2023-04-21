@@ -31,7 +31,6 @@ GO_BUILD = $(GO) build
 GO_TEST = $(GO) test -race -v
 GO_LINT = golangci-lint
 GO_BUILD_LDFLAGS =-s -w -X github.com/apache/skywalking-infra-e2e/commands.version=$(VERSION)
-GOPROXY = https://goproxy.cn
 
 PLATFORMS := windows linux darwin
 os = $(word 1, $@)
@@ -47,7 +46,9 @@ build-linux-fix:
 
 .PHONY: lint
 lint: go-mod-download
-	$(GO_LINT) version
+ifeq ($(CI), true)
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52.2
+endif
 	$(GO_LINT) run -v --timeout 5m ./...
 
 .PHONY: fix-lint
@@ -70,8 +71,10 @@ build: windows linux darwin
 
 .PHONY: go-mod-download
 go-mod-download:
-	@echo "Download go denpendency"
-	@GO111MODULE=on GOPROXY=$(GOPROXY) go mod download
+ifeq ($(CI), true)
+	@go env -w GOPROXY=$(GOPROXY)
+endif
+	go mod download
 
 .PHONY: clean
 clean:

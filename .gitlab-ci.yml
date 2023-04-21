@@ -2,46 +2,29 @@ include:
   project: do/gitlab-ci
   file: golang.yml
 
-stages:
-  - lint
-  - deploy
-
-variables:
-  GOPROXY: https://goproxy.cn,https://${ARTIFACTORY_USER_STAGING}:${ARTIFACTORY_PASS_STAGING}@jfrog.wosai-inc.com/artifactory/api/go/golang-virtual-staging,direct
-
-lint:
-  stage: lint
-  image: golangci/golangci-lint:v1.50
+deploy-release:
+  image: jfrog.wosai-inc.com/docker-virtual-prod/golang-builder:1.20
   script:
     - make lint
-  tags:
-    - jfrog-staging
-
-deploy-release:
-  image: jfrog.wosai-inc.com/docker-virtual-prod/golang-builder:1.19
-  needs:
-    - lint
-  script:
     - make test
     - make build
-  only:
-    - branches
+  variables:
+    GOPROXY: https://goproxy.cn,https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASS}@jfrog.wosai-inc.com/artifactory/api/go/golang-virtual-dev,direct
   artifacts:
-    untracked: false
     when: on_success
-    expire_in: "30 days"
+    expire_in: "1 week"
     paths:
       - bin
 
 deploy-tag:
-  image: jfrog.wosai-inc.com/docker-virtual-prod/golang-builder:1.19
-  needs:
-    - lint
+  image: jfrog.wosai-inc.com/docker-virtual-prod/golang-builder:1.20
   script:
     - make build
+  variables:
+    GOPROXY: https://goproxy.cn,https://${ARTIFACTORY_USER_STAGING}:${ARTIFACTORY_PASS_STAGING}@jfrog.wosai-inc.com/artifactory/api/go/golang-virtual-staging,direct
   artifacts:
     untracked: false
     when: on_success
-    expire_in: "30 days"
+    expire_in: "1 week"
     paths:
       - bin

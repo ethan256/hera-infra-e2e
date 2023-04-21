@@ -2,6 +2,7 @@ package assert
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/pkg/errors"
@@ -98,11 +99,20 @@ func MetricsAssert(expectedPath, query string) error {
 func LoadMetricsData(url string) ([]*prom2json.Family, error) {
 	url = os.ExpandEnv(url)
 	mfChan := make(chan *dto.MetricFamily, 1024)
+	errChan := make(chan error, 1)
 	go func() {
 		if err := prom2json.FetchMetricFamilies(url, mfChan, nil); err != nil {
+			errChan <- fmt.Errorf("failed to query metric data from url: %s, error: %v", url, err)
 			logger.Log.Errorf("failed to query metric data from url: %s, error: %v", url, err)
 		}
 	}()
+
+	// 收集fetch异常
+	select {
+	case err := <-errChan:
+		return nil, err
+	default:
+	}
 
 	var result []*prom2json.Family
 	for mf := range mfChan {
