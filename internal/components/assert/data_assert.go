@@ -95,23 +95,27 @@ func MetricsAssert(expectedPath, query string) error {
 	return nil
 }
 
+type result struct {
+	msg string
+	err error
+}
+
 // LoadMetricsData load metrics from request url.
 func LoadMetricsData(url string) ([]*prom2json.Family, error) {
 	url = os.ExpandEnv(url)
 	mfChan := make(chan *dto.MetricFamily, 1024)
-	errChan := make(chan error, 1)
+	retCh := make(chan result, 1)
 	go func() {
-		if err := prom2json.FetchMetricFamilies(url, mfChan, nil); err != nil {
-			errChan <- fmt.Errorf("failed to query metric data from url: %s, error: %v", url, err)
-			logger.Log.Errorf("failed to query metric data from url: %s, error: %v", url, err)
+		err := prom2json.FetchMetricFamilies(url, mfChan, nil)
+		retCh <- result{
+			err: err,
+			msg: "fetch metric data",
 		}
 	}()
 
-	// 收集fetch异常
-	select {
-	case err := <-errChan:
-		return nil, err
-	default:
+	rt := <-retCh
+	if rt.err != nil {
+		return nil, fmt.Errorf("failed to query metric data from url: %s, error: %v", url, rt.err)
 	}
 
 	var result []*prom2json.Family

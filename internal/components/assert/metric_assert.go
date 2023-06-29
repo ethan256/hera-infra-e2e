@@ -146,7 +146,11 @@ func assertFamilyMetric(expectedFamily, actualFamily *prom2json.Family) error {
 
 func doAssertFunc(expectedMetrics, actualMetrics []any,
 	fn func(expectedIndex int, expectMetric map[string]any, actualMetrics []any, matched *sync.Map) error) error {
-	errChan := make(chan error, len(expectedMetrics))
+	if len(expectedMetrics) > len(actualMetrics) {
+		return errors.New("not matched. len(expectedMetrics)>len(actualMetric)")
+	}
+
+	retCh := make(chan *result, len(expectedMetrics))
 	stop := make(chan struct{})
 	var wg sync.WaitGroup
 	var matched sync.Map
@@ -165,22 +169,27 @@ func doAssertFunc(expectedMetrics, actualMetrics []any,
 
 			expectedMetricMap, ok := expectedMetrics[expectedIndex].(map[string]any)
 			if !ok {
-				errChan <- errors.New("expectedMetric type error, want a map[string]any")
+				retCh <- &result{
+					err: errors.New("expectedMetric type error, want a map[string]any"),
+				}
 				return
 			}
-			errChan <- fn(expectedIndex, expectedMetricMap, actualMetrics, &matched)
+			err := fn(expectedIndex, expectedMetricMap, actualMetrics, &matched)
+			retCh <- &result{
+				err: err,
+			}
 		}(expectedIndex)
 	}
 
 	for {
 		select {
-		case err := <-errChan:
-			if err != nil {
+		case rt := <-retCh:
+			if rt.err != nil {
 				close(stop)
 				// 防止goroutine泄漏
 				wg.Wait()
 				// 只返回通道里第一个非nil的错误
-				return err
+				return rt.err
 			}
 			successAssertCount++
 		default:
@@ -289,8 +298,8 @@ func assertHistogram(expectedIndex int, expectMetric map[string]any, actualMetri
 
 func assertHelper(expectedValue, actualValue, expectedCount, actualCount, expectedSum, actualSum string,
 	expectedLabels, actualLabels map[string]string) (err error) {
-	if len(actualLabels) < len(expectedLabels) {
-		return fmt.Errorf("len(actualLabels) < len(expectedLabels), expected: %+v, actual: %+v", expectedLabels, actualLabels)
+	if len(expectedLabels) > len(actualLabels) {
+		return errors.New("len(expectedLabels) > len(actualLabels)")
 	}
 	if err = assertLabels(expectedLabels, actualLabels); err != nil {
 		return

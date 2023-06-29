@@ -1,0 +1,24 @@
+[
+  {
+    "name": "jdbc_operations:aggr_seconds",
+    "help": "",
+    "type": "SUMMARY",
+    "metrics": [
+      {
+        "labels": {
+          "db_instance": "mysql-server:3306",
+          "db_name": "test"
+        },
+        "timestamp_ms": "ge 0",
+        "quantiles": {
+          "0.5": "gt 0",
+          "0.75": "gt 0",
+          "0.95": "gt 0",
+          "0.99": "gt 0"
+        },
+        "count": "gt 0",
+        "sum": "ge 0"
+      }
+    ]
+  }
+]
