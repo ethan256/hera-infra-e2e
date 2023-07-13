@@ -144,63 +144,28 @@ func assertFamilyMetric(expectedFamily, actualFamily *prom2json.Family) error {
 	return errors.Wrap(err, fmt.Sprintf("Metric[%s]", expectedFamily.Name))
 }
 
-func doAssertFunc(expectedMetrics, actualMetrics []any,
-	fn func(expectedIndex int, expectMetric map[string]any, actualMetrics []any, matched *sync.Map) error) error {
+func doAssertFunc(
+	expectedMetrics, actualMetrics []any,
+	fn func(expectedIndex int, expectMetric map[string]any, actualMetrics []any) error,
+) error {
 	if len(expectedMetrics) > len(actualMetrics) {
 		return errors.New("not matched. len(expectedMetrics)>len(actualMetric)")
 	}
 
-	retCh := make(chan *result, len(expectedMetrics))
-	stop := make(chan struct{})
-	var wg sync.WaitGroup
-	var matched sync.Map
-	var successAssertCount int
-
 	for expectedIndex := 0; expectedIndex < len(expectedMetrics); expectedIndex++ {
-		wg.Add(1)
-		go func(expectedIndex int) {
-			defer wg.Done()
-			// 通过close stop通道来提前退出当前goroutine
-			select {
-			case <-stop:
-				return
-			default:
-			}
-
-			expectedMetricMap, ok := expectedMetrics[expectedIndex].(map[string]any)
-			if !ok {
-				retCh <- &result{
-					err: errors.New("expectedMetric type error, want a map[string]any"),
-				}
-				return
-			}
-			err := fn(expectedIndex, expectedMetricMap, actualMetrics, &matched)
-			retCh <- &result{
-				err: err,
-			}
-		}(expectedIndex)
-	}
-
-	for {
-		select {
-		case rt := <-retCh:
-			if rt.err != nil {
-				close(stop)
-				// 防止goroutine泄漏
-				wg.Wait()
-				// 只返回通道里第一个非nil的错误
-				return rt.err
-			}
-			successAssertCount++
-		default:
-			if successAssertCount >= len(expectedMetrics) {
-				return nil
-			}
+		expectedMetricMap, ok := expectedMetrics[expectedIndex].(map[string]any)
+		if !ok {
+			return errors.New("expectedMetric type error, want a map[string]any")
+		}
+		err := fn(expectedIndex, expectedMetricMap, actualMetrics)
+		if err != nil {
+			return err
 		}
 	}
+	return nil
 }
 
-func assertMetric(expectedIndex int, expectMetric map[string]any, actualMetrics []any, matched *sync.Map) error {
+func assertMetric(expectedIndex int, expectMetric map[string]any, actualMetrics []any) error {
 	var expected prom2json.Metric
 	var err error
 	if err = mapstructure.Decode(&expectMetric, &expected); err != nil {
@@ -211,6 +176,7 @@ func assertMetric(expectedIndex int, expectMetric map[string]any, actualMetrics 
 	// actualIndex的初始值为expectedIndex，目的是优先匹配相同位置的metrics，因为大多数情况下expected和actual顺序是是相同的
 	maxIndex := len(actualMetrics) + expectedIndex
 
+	matched := make(map[int]struct{}, len(actualMetrics))
 	for actualIndex := expectedIndex; actualIndex < maxIndex; actualIndex++ {
 		if actualIndex >= len(actualMetrics) {
 			actualIndex -= len(actualMetrics)
@@ -221,18 +187,18 @@ func assertMetric(expectedIndex int, expectMetric map[string]any, actualMetrics 
 			return errors.New("actualMetric Type error")
 		}
 
-		if _, ok := matched.Load(actualIndex); ok {
+		if _, ok := matched[actualIndex]; ok {
 			continue
 		}
 		if err = assertHelper(expected.Value, actual.Value, "", "", "", "", expected.Labels, actual.Labels); err == nil {
-			matched.Store(actualIndex, actualIndex)
+			matched[actualIndex] = struct{}{}
 			break
 		}
 	}
 	return err
 }
 
-func assertSummary(expectedIndex int, expectMetric map[string]any, actualMetrics []any, matched *sync.Map) error {
+func assertSummary(expectedIndex int, expectMetric map[string]any, actualMetrics []any) error {
 	var expected prom2json.Summary
 	var err error
 	if err = mapstructure.Decode(&expectMetric, &expected); err != nil {
@@ -243,6 +209,7 @@ func assertSummary(expectedIndex int, expectMetric map[string]any, actualMetrics
 	// actualIndex的初始值为expectedIndex，目的是优先匹配相同位置的metrics，因为大多数情况下expected和actual顺序是是相同的
 	maxIndex := len(actualMetrics) + expectedIndex
 
+	matched := make(map[int]struct{}, len(actualMetrics))
 	for actualIndex := expectedIndex; actualIndex < maxIndex; actualIndex++ {
 		if actualIndex >= len(actualMetrics) {
 			actualIndex -= len(actualMetrics)
@@ -253,18 +220,18 @@ func assertSummary(expectedIndex int, expectMetric map[string]any, actualMetrics
 			return errors.New("actualMetric Type error")
 		}
 
-		if _, ok := matched.Load(actualIndex); ok {
+		if _, ok := matched[actualIndex]; ok {
 			continue
 		}
 		if err = assertHelper("", "", expected.Count, actual.Count, expected.Sum, actual.Sum, expected.Labels, actual.Labels); err == nil {
-			matched.Store(actualIndex, actualIndex)
+			matched[actualIndex] = struct{}{}
 			break
 		}
 	}
 	return err
 }
 
-func assertHistogram(expectedIndex int, expectMetric map[string]any, actualMetrics []any, matched *sync.Map) error {
+func assertHistogram(expectedIndex int, expectMetric map[string]any, actualMetrics []any) error {
 	var expected prom2json.Histogram
 	var err error
 	if err = mapstructure.Decode(&expectMetric, &expected); err != nil {
@@ -275,6 +242,7 @@ func assertHistogram(expectedIndex int, expectMetric map[string]any, actualMetri
 	// actualIndex的初始值为expectedIndex，目的是优先匹配相同位置的metrics，因为大多数情况下expected和actual顺序是是相同的
 	maxIndex := len(actualMetrics) + expectedIndex
 
+	matched := make(map[int]struct{}, len(actualMetrics))
 	for actualIndex := expectedIndex; actualIndex < maxIndex; actualIndex++ {
 		if actualIndex >= len(actualMetrics) {
 			actualIndex -= len(actualMetrics)
@@ -285,11 +253,11 @@ func assertHistogram(expectedIndex int, expectMetric map[string]any, actualMetri
 			return errors.New("actualMetric Type error")
 		}
 
-		if _, ok := matched.Load(actualIndex); ok {
+		if _, ok := matched[actualIndex]; ok {
 			continue
 		}
 		if err = assertHelper("", "", expected.Count, actual.Count, expected.Sum, actual.Sum, expected.Labels, actual.Labels); err == nil {
-			matched.Store(actualIndex, actualIndex)
+			matched[actualIndex] = struct{}{}
 			break
 		}
 	}
